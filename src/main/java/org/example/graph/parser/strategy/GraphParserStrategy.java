@@ -4,7 +4,15 @@ import com.google.common.graph.MutableValueGraph;
 import org.example.graph.Vertex;
 import org.example.graph.parser.strategy.exception.GraphParserStrategyException;
 
-public interface GraphParserStrategy {
-    void parse(String fileName) throws GraphParserStrategyException;
-    MutableValueGraph<Vertex, Integer> getValueGraph();
+import static java.util.Objects.requireNonNull;
+
+public abstract class GraphParserStrategy {
+    protected String fileName;
+
+    public GraphParserStrategy(String fileName) {
+        this.fileName = requireNonNull(fileName);
+    }
+
+    public abstract void parse() throws GraphParserStrategyException;
+    public abstract MutableValueGraph<Vertex, Integer> getValueGraph();
 }

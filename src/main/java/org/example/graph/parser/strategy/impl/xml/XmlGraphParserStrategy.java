@@ -25,25 +25,28 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
+import static java.util.Objects.*;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static org.example.Constants.XSD_FILE_NAME;
 import static org.example.Utils.parseIntValueFrom;
 
-public class XmlGraphParserStrategy implements GraphParserStrategy {
+public class XmlGraphParserStrategy extends GraphParserStrategy {
 
     private final XMLInputFactory factory;
     private final List<Vertex> twoAdjacentVertices;
     private int edgeValue;
 
-    public XmlGraphParserStrategy() {
+    public XmlGraphParserStrategy(String fileName) {
+        super(fileName);
         factory = XMLInputFactory.newInstance();
         twoAdjacentVertices = new ArrayList<>(2);
     }
     private MutableValueGraph<Vertex, Integer> valueGraph;
 
     @Override
-    public void parse(String fileName) throws XmlGraphParserStrategyException {
+    public void parse() throws XmlGraphParserStrategyException {
         validate(fileName);
         build(fileName);
     }
