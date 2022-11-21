@@ -16,4 +16,22 @@ public class Vertex {
     public static Vertex from(int id) {
         return new Vertex(id);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Vertex vertex)) return false;
+
+        return id == vertex.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return id;
+    }
+
+    @Override
+    public String toString() {
+        return String.valueOf(id);
+    }
 }
