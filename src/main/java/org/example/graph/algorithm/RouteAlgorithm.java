@@ -1,6 +1,7 @@
 package org.example.graph.algorithm;
 
 import org.example.graph.Vertex;
+import org.example.graph.algorithm.exception.RouteAlgorithmException;
 import org.example.graph.parser.GraphParser;
 
 import java.util.Stack;
@@ -15,5 +16,5 @@ public abstract class RouteAlgorithm {
         this.graphParser = requireNonNull(graphParser);
     }
 
-    public abstract Stack<Vertex> buildRoute(Vertex start, Vertex end);
+    public abstract Stack<Vertex> buildRoute(Vertex start, Vertex end) throws RouteAlgorithmException;
 }

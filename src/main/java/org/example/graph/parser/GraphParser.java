@@ -17,8 +17,8 @@ public class GraphParser {
         this.strategy = strategy;
     }
 
-    public MutableValueGraph<Vertex, Integer> parse(String fileName) throws GraphParserStrategyException {
-        strategy.parse(fileName);
+    public MutableValueGraph<Vertex, Integer> parse() throws GraphParserStrategyException {
+        strategy.parse();
         return strategy.getValueGraph();
     }
 
