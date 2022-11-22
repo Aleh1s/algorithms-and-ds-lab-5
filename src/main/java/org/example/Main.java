@@ -1,7 +1,6 @@
 package org.example;
 
 import lombok.SneakyThrows;
-import org.example.graph.Properties;
 import org.example.graph.Vertex;
 import org.example.graph.algorithm.RouteAlgorithm;
 import org.example.graph.algorithm.factory.RouteAlgorithmFactory;
@@ -21,7 +20,7 @@ public class Main {
         RouteAlgorithmFactory factory = AntAlgorithmFactory.newInstance();
         factory.setGraphParser(graphParser);
         RouteAlgorithm routeAlgorithm = factory.createRouteAlgorithm();
-        Stack<Vertex> vertices = routeAlgorithm.buildRoute(Vertex.from(1), Vertex.from(5));
+        Stack<Vertex> vertices = routeAlgorithm.buildRoute(Vertex.from(1), Vertex.from(10));
         System.out.println(vertices);
     }
 }
