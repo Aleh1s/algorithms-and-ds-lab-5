@@ -10,5 +10,5 @@ public class Constants {
     public static final String OUTPUT_FILE_NAME = "output.file.name";
     public static final String XSD_FILE_NAME = "src/main/resources/graph.xsd";
     public static final String APP_PROPS_FILE_NAME = "src/main/resources/app.properties";
-    public static final String GRAPH_SOURCE_FILE_NAME = "src/main/resources/15valueInput.xml";
+    public static final String GRAPH_SOURCE_FILE_NAME = "src/main/resources/300input.xml";
 }

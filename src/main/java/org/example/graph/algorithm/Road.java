@@ -13,7 +13,7 @@ public class Road {
     private Road(EndpointPair<Vertex> edge, double proximity) {
         this.edge = edge;
         this.proximity = proximity;
-        this.pheromone = 0.2f;
+        this.pheromone = 0.2;
     }
 
     public void pheromoneEvaporation(double k) {

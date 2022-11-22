@@ -16,6 +16,7 @@ public class Path {
     }
 
     public void addRoad(Road road) {
+        roads.push(road);
         length += graph.edgeValue(road.getEdge())
                 .orElseThrow(() -> new IllegalStateException("There is no such edge in graph"));
     }

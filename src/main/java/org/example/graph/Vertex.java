@@ -22,6 +22,10 @@ public class Vertex {
         return id == vertex.id;
     }
 
+    public int getId() {
+        return id;
+    }
+
     @Override
     public int hashCode() {
         return id;

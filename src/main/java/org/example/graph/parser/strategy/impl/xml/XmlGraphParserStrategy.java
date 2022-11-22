@@ -25,9 +25,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
-import static java.util.Objects.*;
 import static javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI;
 import static org.example.Constants.XSD_FILE_NAME;
 import static org.example.Utils.parseIntValueFrom;

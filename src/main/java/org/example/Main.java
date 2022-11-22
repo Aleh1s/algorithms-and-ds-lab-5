@@ -3,6 +3,9 @@ package org.example;
 import lombok.SneakyThrows;
 import org.example.graph.Vertex;
 import org.example.graph.algorithm.RouteAlgorithm;
+import org.example.graph.algorithm.exporter.GraphExporter;
+import org.example.graph.algorithm.exporter.factory.GraphExporterFactory;
+import org.example.graph.algorithm.exporter.factory.impl.GraphExporterFactoryImpl;
 import org.example.graph.algorithm.factory.RouteAlgorithmFactory;
 import org.example.graph.algorithm.impl.ant.factory.AntAlgorithmFactory;
 import org.example.graph.parser.GraphParser;
@@ -17,10 +20,16 @@ public class Main {
     public static void main(String[] args) {
         XmlGraphParserStrategy strategy = new XmlGraphParserStrategy(GRAPH_SOURCE_FILE_NAME);
         GraphParser graphParser = new GraphParser(strategy);
+
+        GraphExporterFactory exporterFactory = GraphExporterFactory.newInstance();
+        GraphExporter graphExporter = exporterFactory.newGraphExporter();
+
         RouteAlgorithmFactory factory = AntAlgorithmFactory.newInstance();
         factory.setGraphParser(graphParser);
+        factory.setGraphExporter(graphExporter);
+
         RouteAlgorithm routeAlgorithm = factory.createRouteAlgorithm();
-        Stack<Vertex> vertices = routeAlgorithm.buildRoute(Vertex.from(1), Vertex.from(10));
+        Stack<Vertex> vertices = routeAlgorithm.buildRoute(Vertex.from(1), Vertex.from(11));
         System.out.println(vertices);
     }
 }
