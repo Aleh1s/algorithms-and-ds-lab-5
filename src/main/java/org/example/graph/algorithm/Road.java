@@ -4,14 +4,15 @@ import com.google.common.graph.EndpointPair;
 import org.example.graph.Vertex;
 
 import static java.lang.Math.pow;
+import static java.util.Objects.*;
 
 public class Road {
-    private EndpointPair<Vertex> edge;
+    private final EndpointPair<Vertex> edge;
     private final double proximity;
     private double pheromone;
 
     private Road(EndpointPair<Vertex> edge, double proximity) {
-        this.edge = edge;
+        this.edge = requireNonNull(edge);
         this.proximity = proximity;
         this.pheromone = 0.2;
     }

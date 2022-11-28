@@ -64,9 +64,8 @@ public class AntAlgorithm extends RouteAlgorithm {
                 paths.add(findPath(start, end));
             updateRoads(paths);
         }
-
         Stack<Vertex> path = buildBestRoute(start, end);
-        exportGraph(path);
+//        exportGraph(path);
         return path;
     }
 
@@ -81,17 +80,24 @@ public class AntAlgorithm extends RouteAlgorithm {
     }
 
     private Path transform(Stack<Vertex> path) {
+        System.out.println(path);
         Path p = new Path(graph);
         Vertex curr = path.pop(), next;
         while (!path.empty()) {
             next = path.pop();
-            p.addRoad(roads.get(unordered(curr, next)));
+            Road road = roads.get(unordered(curr, next));
+
+            if (road == null)
+                System.out.println();
+
+            p.addRoad(road);
             curr = next;
         }
         return p;
     }
 
     private Indicator findPathRecursive(Vertex curr, Vertex end, HashSet<Vertex> visited, Stack<Vertex> path) {
+        System.out.println("add: " + curr.getId());
         visited.add(curr);
         path.push(curr);
 
@@ -110,7 +116,9 @@ public class AntAlgorithm extends RouteAlgorithm {
             if (i.equals(RESULT))
                 return i;
 
-            successors.remove(path.pop());
+            Vertex pop = path.pop();
+            System.out.println("pop: " + pop.getId());
+            successors.remove(pop);
             p = probabilities(curr, successors);
         }
 
@@ -130,7 +138,6 @@ public class AntAlgorithm extends RouteAlgorithm {
     }
 
     private Set<Vertex> getSuccessors(Vertex curr, Set<Vertex> visited) {
-        MutableValueGraph<Vertex, Integer> graph = this.graph;
         return graph.adjacentNodes(curr).stream()
                 .filter(v -> !visited.contains(v))
                 .collect(Collectors.toSet());
@@ -169,7 +176,10 @@ public class AntAlgorithm extends RouteAlgorithm {
         if (i.equals(FAILURE))
             throw new IllegalStateException("Cannot find path");
 
-        System.out.println("Length -> " + transform((Stack<Vertex>) path.clone()).getLength());
+        System.out.println("bbr before clone: " + path);
+        Stack<Vertex> clone = (Stack<Vertex>) path.clone(); // todo:
+        System.out.println("bbr after clone: " + path);
+        transform(clone);
 
         return path;
     }
@@ -192,6 +202,8 @@ public class AntAlgorithm extends RouteAlgorithm {
 
             if (i.equals(RESULT))
                 return i;
+
+            path.pop();
         }
 
         return FAILURE;

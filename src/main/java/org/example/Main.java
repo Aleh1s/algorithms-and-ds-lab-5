@@ -1,5 +1,6 @@
 package org.example;
 
+import com.google.common.graph.MutableValueGraph;
 import lombok.SneakyThrows;
 import org.example.graph.Vertex;
 import org.example.graph.algorithm.RouteAlgorithm;
@@ -28,7 +29,9 @@ public class Main {
         factory.setGraphExporter(graphExporter);
 
         RouteAlgorithm routeAlgorithm = factory.createRouteAlgorithm();
-        Stack<Vertex> vertices = routeAlgorithm.buildRoute(Vertex.from(1), Vertex.from(11));
-        System.out.println(vertices);
+        for (int i = 0; i < 100; i++) {
+            Stack<Vertex> vertices = routeAlgorithm.buildRoute(Vertex.from(1), Vertex.from(14));
+            System.out.println(vertices);
+        }
     }
 }
