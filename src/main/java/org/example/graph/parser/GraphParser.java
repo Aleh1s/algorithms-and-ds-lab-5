@@ -1,6 +1,7 @@
 package org.example.graph.parser;
 
 import com.google.common.graph.MutableValueGraph;
+import org.example.graph.Edge;
 import org.example.graph.Vertex;
 import org.example.graph.parser.strategy.GraphParserStrategy;
 import org.example.graph.parser.strategy.exception.GraphParserStrategyException;
@@ -17,7 +18,7 @@ public class GraphParser {
         this.strategy = strategy;
     }
 
-    public MutableValueGraph<Vertex, Integer> parse() throws GraphParserStrategyException {
+    public MutableValueGraph<Vertex, Edge> parse() throws GraphParserStrategyException {
         strategy.parse();
         return strategy.getValueGraph();
     }

@@ -1,5 +1,7 @@
 package org.example.graph.algorithm.impl.ant.factory;
 
+import org.example.graph.Edge;
+import org.example.graph.Vertex;
 import org.example.graph.algorithm.RouteAlgorithm;
 import org.example.graph.algorithm.exporter.GraphExporter;
 import org.example.graph.algorithm.factory.RouteAlgorithmFactory;
@@ -16,7 +18,6 @@ import static org.example.Constants.*;
 public class AntAlgorithmFactory implements RouteAlgorithmFactory {
 
     private GraphParser graphParser;
-    private GraphExporter graphExporter;
     private AntAlgorithmFactory() {}
 
     public static AntAlgorithmFactory newInstance() {
@@ -36,8 +37,7 @@ public class AntAlgorithmFactory implements RouteAlgorithmFactory {
                     Integer.parseInt(props.getProperty(NUMBER_OF_ANTS)),
                     Integer.parseInt(props.getProperty(ITERATIONS)),
                     Double.parseDouble(props.getProperty(P)),
-                    graphParser,
-                    graphExporter
+                    graphParser
             );
         } catch (IOException e) {
             throw new AntAlgorithmFactoryException(e);
@@ -48,10 +48,5 @@ public class AntAlgorithmFactory implements RouteAlgorithmFactory {
     @Override
     public void setGraphParser(GraphParser graphParser) {
         this.graphParser = graphParser;
-    }
-
-    @Override
-    public void setGraphExporter(GraphExporter graphExporter) {
-        this.graphExporter = graphExporter;
     }
 }

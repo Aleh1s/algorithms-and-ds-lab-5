@@ -2,10 +2,10 @@ package org.example.graph.algorithm.impl.ant;
 
 import com.google.common.graph.EndpointPair;
 import com.google.common.graph.MutableValueGraph;
+import org.example.graph.Edge;
 import org.example.graph.Vertex;
 import org.example.graph.algorithm.Entry;
 import org.example.graph.algorithm.Path;
-import org.example.graph.algorithm.Road;
 import org.example.graph.algorithm.RouteAlgorithm;
 import org.example.graph.algorithm.exporter.GraphExporter;
 import org.example.graph.algorithm.impl.ant.exception.AntAlgorithmException;
@@ -15,10 +15,9 @@ import org.example.graph.parser.strategy.exception.GraphParserStrategyException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.google.common.graph.EndpointPair.unordered;
 import static java.util.function.Function.identity;
-import static org.example.graph.algorithm.impl.ant.Indicator.*;
 import static org.example.graph.algorithm.impl.ant.Indicator.FAILURE;
+import static org.example.graph.algorithm.impl.ant.Indicator.RESULT;
 
 public class AntAlgorithm extends RouteAlgorithm {
 
@@ -28,9 +27,7 @@ public class AntAlgorithm extends RouteAlgorithm {
     private final int numberOfAnts;
     private final int iterations;
     private final double p;
-    private MutableValueGraph<Vertex, Integer> graph;
-    private Map<EndpointPair<Vertex>, Road> roads;
-
+    private MutableValueGraph<Vertex, Edge> graph;
     public AntAlgorithm(
             int alfa,
             int beta,
@@ -38,9 +35,8 @@ public class AntAlgorithm extends RouteAlgorithm {
             int numberOfAnts,
             int iterations,
             double p,
-            GraphParser parser,
-            GraphExporter exporter) {
-        super(parser, exporter);
+            GraphParser parser) {
+        super(parser);
         this.alfa = alfa;
         this.beta = beta;
         this.lMin = lMin;
@@ -50,23 +46,55 @@ public class AntAlgorithm extends RouteAlgorithm {
     }
 
     @Override
-    public Stack<Vertex> buildRoute(Vertex start, Vertex end) throws AntAlgorithmException {
-        if (start.equals(end))
-            new Stack<>();
+    @SuppressWarnings("unchecked")
+    public List<Vertex> buildRoute(Vertex start, Vertex terminal) throws AntAlgorithmException {
+        if (start.equals(terminal))
+            return List.of(start);
 
         buildGraph();
-        checkPoints(start, end);
-        initRoads();
+        checkPoints(start, terminal);
+        startToMove(start, terminal);
 
-        for (int i = 0; i < iterations; i++) {
-            List<Path> paths = new ArrayList<>(numberOfAnts);
-            for (int j = 0; j < numberOfAnts; j++)
-                paths.add(findPath(start, end));
-            updateRoads(paths);
+        Stack<Vertex> bestRoute = buildBestRoute(start, terminal);
+        System.out.println("Length: " + Path.valueOf((Stack<Vertex>) bestRoute.clone(), graph).getLength());
+        return bestRoute;
+    }
+
+    @Override
+    public MutableValueGraph<Vertex, Edge> getGraph() {
+        return graph;
+    }
+
+    private void buildGraph() throws AntAlgorithmException {
+        try {
+            this.graph = graphParser.parse();
+        } catch (GraphParserStrategyException e) {
+            throw new AntAlgorithmException(e);
         }
-        Stack<Vertex> path = buildBestRoute(start, end);
-//        exportGraph(path);
-        return path;
+    }
+
+    private void checkPoints(Vertex s, Vertex e) throws AntAlgorithmException {
+        Set<Vertex> vertices = graph.nodes();
+
+        String message = "Invalid %s point";
+
+        if (!vertices.contains(s))
+            throw new AntAlgorithmException(message.formatted("start"));
+
+        if (!vertices.contains(e))
+            throw new AntAlgorithmException(message.formatted("terminal"));
+    }
+
+    private void startToMove(Vertex start, Vertex end) {
+        for (int i = 0; i < iterations; i++)
+            updateEdges(findPaths(start, end));
+    }
+
+    private List<Path> findPaths(Vertex start, Vertex end) {
+        List<Path> paths = new LinkedList<>();
+        for (int j = 0; j < numberOfAnts; j++)
+            paths.add(findPath(start, end));
+        return paths;
     }
 
     private Path findPath(Vertex start, Vertex end) {
@@ -76,59 +104,40 @@ public class AntAlgorithm extends RouteAlgorithm {
         if (i.equals(FAILURE))
             throw new IllegalStateException("Cannot find path");
 
-        return transform(path);
+        return Path.valueOf(path, graph);
     }
 
-    private Path transform(Stack<Vertex> path) {
-        System.out.println(path);
-        Path p = new Path(graph);
-        Vertex curr = path.pop(), next;
-        while (!path.empty()) {
-            next = path.pop();
-            Road road = roads.get(unordered(curr, next));
-
-            if (road == null)
-                System.out.println();
-
-            p.addRoad(road);
-            curr = next;
-        }
-        return p;
-    }
-
-    private Indicator findPathRecursive(Vertex curr, Vertex end, HashSet<Vertex> visited, Stack<Vertex> path) {
-        System.out.println("add: " + curr.getId());
+    private Indicator findPathRecursive(Vertex curr, Vertex terminal, HashSet<Vertex> visited, Stack<Vertex> path) {
         visited.add(curr);
         path.push(curr);
 
-        if (curr.equals(end))
+        if (curr.equals(terminal))
             return RESULT;
 
-        Set<Vertex> successors = getSuccessors(curr, visited);
+        Set<Vertex> adjacentVertices = getNotVisitedAdjacentVertices(curr, visited);
 
-        if (successors.isEmpty())
+        if (adjacentVertices.isEmpty())
             return FAILURE;
 
-        Map<Vertex, Double> p = probabilities(curr, successors);
-        while (p.size() > 0) {
-            Indicator i = findPathRecursive(nextVertex(p), end, visited, path);
+        Map<Vertex, Double> transitionProbabilities
+                = getTransitionProbabilities(curr, adjacentVertices);
+        while (transitionProbabilities.size() > 0) {
+            Indicator i = findPathRecursive(takeStep(transitionProbabilities), terminal, visited, path);
 
             if (i.equals(RESULT))
                 return i;
 
-            Vertex pop = path.pop();
-            System.out.println("pop: " + pop.getId());
-            successors.remove(pop);
-            p = probabilities(curr, successors);
+            adjacentVertices.remove(path.pop());
+            transitionProbabilities = getTransitionProbabilities(curr, adjacentVertices);
         }
 
         return FAILURE;
     }
 
-    private Vertex nextVertex(Map<Vertex, Double> probabilities) {
-        double random = calculateRandom();
+    private Vertex takeStep(Map<Vertex, Double> transitionProbabilities) {
+        double random = calculateRandomDouble();
         Vertex last = null;
-        for (Map.Entry<Vertex, Double> e : probabilities.entrySet()) {
+        for (Map.Entry<Vertex, Double> e : transitionProbabilities.entrySet()) {
             random -= e.getValue();
             last = e.getKey();
             if (random <= 0)
@@ -137,36 +146,24 @@ public class AntAlgorithm extends RouteAlgorithm {
         return last;
     }
 
-    private Set<Vertex> getSuccessors(Vertex curr, Set<Vertex> visited) {
+    private Set<Vertex> getNotVisitedAdjacentVertices(Vertex curr, Set<Vertex> visited) {
         return graph.adjacentNodes(curr).stream()
                 .filter(v -> !visited.contains(v))
                 .collect(Collectors.toSet());
     }
 
-    private Map<Vertex, Double> probabilities(Vertex curr, Set<Vertex> successors) {
-        double sum = successors.stream()
-                .map(s -> roads.get(unordered(curr, s)))
-                .mapToDouble(r -> r.calculateWish(alfa, beta))
-                .sum();
-
-        return successors.stream()
+    private Map<Vertex, Double> getTransitionProbabilities(Vertex curr, Set<Vertex> adjacentVertices) {
+        double sumOfWish = getSumOfWish(curr, adjacentVertices);
+        return adjacentVertices.stream()
                 .collect(Collectors.toMap(
-                        identity(), s -> calculateProbability(roads.get(unordered(curr, s)), sum)));
+                        identity(), vertex -> calculateProbability(getEdge(curr, vertex), sumOfWish)));
     }
 
-
-    private void exportGraph(Stack<Vertex> path) {
-        graphExporter.setGraph(graph);
-        graphExporter.setEdges(roads);
-        graphExporter.setPath(new HashSet<>(path));
-        graphExporter.export();
-    }
-
-    private void checkPoints(Vertex s, Vertex e) throws AntAlgorithmException {
-        Set<Vertex> nodes = graph.nodes();
-
-        if (!nodes.contains(s) || !nodes.contains(e))
-            throw new AntAlgorithmException("Invalid input points");
+    public double getSumOfWish(Vertex curr, Set<Vertex> adjacentVertices) {
+        return adjacentVertices.stream()
+                .map(vertex -> getEdge(curr, vertex))
+                .mapToDouble(e -> e.calculateWish(alfa, beta))
+                .sum();
     }
 
     private Stack<Vertex> buildBestRoute(Vertex start, Vertex end) {
@@ -176,29 +173,25 @@ public class AntAlgorithm extends RouteAlgorithm {
         if (i.equals(FAILURE))
             throw new IllegalStateException("Cannot find path");
 
-        System.out.println("bbr before clone: " + path);
-        Stack<Vertex> clone = (Stack<Vertex>) path.clone(); // todo:
-        System.out.println("bbr after clone: " + path);
-        transform(clone);
-
         return path;
     }
 
-    private Indicator buildBestRouteRecursive(Vertex curr, Vertex end, Set<Vertex> visited, Stack<Vertex> path) {
+    private Indicator buildBestRouteRecursive(Vertex curr, Vertex terminal, Set<Vertex> visited, Stack<Vertex> path) {
         visited.add(curr);
         path.push(curr);
 
-        if (curr.equals(end))
+        if (curr.equals(terminal))
             return RESULT;
 
-        Set<Vertex> successors = getSuccessors(curr, visited);
+        Set<Vertex> adjacentVertices = getNotVisitedAdjacentVertices(curr, visited);
 
-        if (successors.isEmpty())
+        if (adjacentVertices.isEmpty())
             return FAILURE;
 
-        PriorityQueue<Entry> entries = pheromoneQueue(curr, successors);
-        while (!entries.isEmpty()) {
-            Indicator i = buildBestRouteRecursive(entries.poll().getVertex(), end, visited, path);
+        PriorityQueue<Entry> pheromoneQueue = getPheromoneQueue(curr, adjacentVertices);
+        while (!pheromoneQueue.isEmpty()) {
+            Entry entry = pheromoneQueue.poll();
+            Indicator i = buildBestRouteRecursive(entry.getVertex(), terminal, visited, path);
 
             if (i.equals(RESULT))
                 return i;
@@ -209,56 +202,42 @@ public class AntAlgorithm extends RouteAlgorithm {
         return FAILURE;
     }
 
-    private PriorityQueue<Entry> pheromoneQueue(Vertex curr, Set<Vertex> successors) {
-        PriorityQueue<Entry> queue = new PriorityQueue<>(Comparator.comparing(Entry::getPheromone).reversed());
-        successors.stream()
-                .map(v -> Entry.from(v, roads.get(unordered(curr, v)).getPheromone()))
-                .forEach(queue::add);
+    private PriorityQueue<Entry> getPheromoneQueue(Vertex curr, Set<Vertex> adjacentVertices) {
+        PriorityQueue<Entry> queue = new PriorityQueue<>();
+        adjacentVertices.stream()
+                .map(vertex -> {
+                    Edge edge = getEdge(curr, vertex);
+                    return Entry.from(vertex, edge.getPheromone(), edge.getDistance());
+                }).forEach(queue::add);
         return queue;
     }
 
-    private void updateRoads(List<Path> paths) {
-        Map<EndpointPair<Vertex>, Road> roads = this.roads;
-        int lMin = this.lMin;
-
-        roads.values().forEach(road -> road.pheromoneEvaporation(p));
+    private void updateEdges(List<Path> paths) {
+        evaporatePheromone();
         for (Path path : paths) {
             double extraPheromone = path.getExtraPheromone(lMin);
-            for (Road road : path.getRoads()) road.addPheromone(extraPheromone);
+            for (EndpointPair<Vertex> edge : path.getEdges())
+                getEdge(edge.nodeV(), edge.nodeU()).addPheromone(extraPheromone);
         }
     }
 
-    private double calculateRandom() {
+    private void evaporatePheromone() {
+        graph.edges().stream()
+                .map(e -> getEdge(e.nodeV(), e.nodeU()))
+                .forEach(e -> e.evaporatePheromone(p));
+    }
+
+    private double calculateRandomDouble() {
         Random random = new Random();
         int randomInt = random.nextInt(1001);
         return randomInt / 1000.0;
     }
 
-    private double calculateProbability(Road road, double sum) {
-        return road.calculateWish(alfa, beta) / sum;
+    private double calculateProbability(Edge edge, double sum) {
+        return edge.calculateWish(alfa, beta) / sum;
     }
 
-    private void initRoads() {
-        this.roads = graph.edges().stream()
-                .collect(Collectors.toMap(
-                        identity(), endpointPair -> Road.from(
-                                endpointPair, calculateProximity(getLength(endpointPair)))));
-    }
-
-    private int getLength(EndpointPair<Vertex> endpointPair) {
-        return graph.edgeValue(endpointPair)
-                .orElseThrow(() -> new IllegalStateException("There is no value for given endpoint pair"));
-    }
-
-    private double calculateProximity(int length) {
-        return 1 / (float) length;
-    }
-
-    private void buildGraph() throws AntAlgorithmException {
-        try {
-            this.graph = graphParser.parse();
-        } catch (GraphParserStrategyException e) {
-            throw new AntAlgorithmException(e);
-        }
+    private Edge getEdge(Vertex v1, Vertex v2) {
+        return graph.edgeValue(v1, v2).orElseThrow();
     }
 }

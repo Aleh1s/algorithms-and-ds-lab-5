@@ -2,20 +2,22 @@ package org.example.graph.algorithm.exporter;
 
 import com.google.common.graph.EndpointPair;
 import com.google.common.graph.MutableValueGraph;
+import org.example.graph.Edge;
 import org.example.graph.Vertex;
-import org.example.graph.algorithm.Road;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
-import static java.util.Objects.*;
+import static java.util.Objects.requireNonNull;
 
 public class GraphExporter {
 
-    private MutableValueGraph<Vertex, Integer> graph;
-    private Map<EndpointPair<Vertex>, Road> edges;
+    private MutableValueGraph<Vertex, Edge> graph;
     private Set<Vertex> path;
     private List<String> lines;
     private final String fileName;
@@ -23,10 +25,6 @@ public class GraphExporter {
     public GraphExporter(String fileName) {
         this.fileName = requireNonNull(fileName);
         this.lines = new LinkedList<>();
-    }
-
-    public void setGraph(MutableValueGraph<Vertex, Integer> graph) {
-        this.graph = requireNonNull(graph);
     }
 
     public void export() {
@@ -50,8 +48,8 @@ public class GraphExporter {
             lines.add("  %d -- %d [label=\"%d\", penwidth=%s, color=aquamarine3]".formatted(
                     endpointPair.nodeU().getId(),
                     endpointPair.nodeV().getId(),
-                    graph.edgeValue(endpointPair).orElseThrow(),
-                    formatPheromone(edges.get(endpointPair).getPheromone())));
+                    graph.edgeValue(endpointPair).orElseThrow().getDistance(),
+                    formatPheromone(graph.edgeValue(endpointPair).orElseThrow().getPheromone())));
 
         lines.add("}");
         this.lines = lines;
@@ -76,8 +74,8 @@ public class GraphExporter {
         }
     }
 
-    public void setEdges(Map<EndpointPair<Vertex>, Road> edges) {
-        this.edges = edges;
+    public void setGraph(MutableValueGraph<Vertex, Edge> graph) {
+        this.graph = Objects.requireNonNull(graph);
     }
 
     public void setPath(Set<Vertex> path) {

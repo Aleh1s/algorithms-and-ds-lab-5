@@ -33,7 +33,7 @@ public class Edge {
     }
 
     public double calculateWish(int alfa, int beta) {
-        return pow(pheromone, alfa) + pow(proximity, beta);
+        return pow(pheromone, alfa) * pow(proximity, beta);
     }
 
     public void addPheromone(double extraPheromone) {

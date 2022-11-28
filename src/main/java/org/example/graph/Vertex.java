@@ -10,7 +10,7 @@ public class Vertex {
         this.id = id;
     }
 
-    public static Vertex from(int id) {
+    public static Vertex valueOf(int id) {
         return new Vertex(id);
     }
 

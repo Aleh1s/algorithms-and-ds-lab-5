@@ -2,6 +2,7 @@ package org.example.graph.parser.strategy.impl.xml;
 
 import com.google.common.graph.MutableValueGraph;
 import com.google.common.graph.ValueGraphBuilder;
+import org.example.graph.Edge;
 import org.example.graph.Vertex;
 import org.example.graph.parser.strategy.GraphParserStrategy;
 import org.example.graph.parser.strategy.impl.xml.exception.XmlGraphParserStrategyException;
@@ -34,14 +35,14 @@ public class XmlGraphParserStrategy extends GraphParserStrategy {
 
     private final XMLInputFactory factory;
     private final List<Vertex> twoAdjacentVertices;
-    private int edgeValue;
+    private int distance;
+    private MutableValueGraph<Vertex, Edge> valueGraph;
 
     public XmlGraphParserStrategy(String fileName) {
         super(fileName);
         factory = XMLInputFactory.newInstance();
         twoAdjacentVertices = new ArrayList<>(2);
     }
-    private MutableValueGraph<Vertex, Integer> valueGraph;
 
     @Override
     public void parse() throws XmlGraphParserStrategyException {
@@ -72,7 +73,7 @@ public class XmlGraphParserStrategy extends GraphParserStrategy {
                     .undirected().allowsSelfLoops(false).build();
             case EDGE -> {
                 twoAdjacentVertices.clear();
-                edgeValue = getEdgeValue(startElement);
+                distance = getEdgeValue(startElement);
             }
             case VERTEX -> twoAdjacentVertices.add(createVertex(startElement));
         }
@@ -87,12 +88,12 @@ public class XmlGraphParserStrategy extends GraphParserStrategy {
         XmlTag tag = XmlTag.from(endElement.getName());
         if (tag == XmlTag.EDGE)
             valueGraph.putEdgeValue(
-                    twoAdjacentVertices.get(0), twoAdjacentVertices.get(1), edgeValue);
+                    twoAdjacentVertices.get(0), twoAdjacentVertices.get(1), Edge.valueOf(distance));
     }
 
     private Vertex createVertex(StartElement startElement) {
         Attribute attribute = startElement.getAttributeByName(QName.valueOf("id"));
-        return Vertex.from(parseIntValueFrom(attribute));
+        return Vertex.valueOf(parseIntValueFrom(attribute));
     }
 
     private void validate(String fileName) throws XmlGraphParserStrategyException {
@@ -107,7 +108,7 @@ public class XmlGraphParserStrategy extends GraphParserStrategy {
     }
 
     @Override
-    public MutableValueGraph<Vertex, Integer> getValueGraph() {
+    public MutableValueGraph<Vertex, Edge> getValueGraph() {
         return valueGraph;
     }
 }
