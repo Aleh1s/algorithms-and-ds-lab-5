@@ -51,4 +51,6 @@ public class Path {
     public double getExtraPheromone(int lMin) {
         return lMin / (double) length;
     }
+
+
 }

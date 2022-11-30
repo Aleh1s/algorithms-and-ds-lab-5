@@ -2,12 +2,12 @@ package org.example.graph.algorithm.impl.ant;
 
 import com.google.common.graph.EndpointPair;
 import com.google.common.graph.MutableValueGraph;
+import org.example.Statistics;
 import org.example.graph.Edge;
 import org.example.graph.Vertex;
 import org.example.graph.algorithm.Entry;
 import org.example.graph.algorithm.Path;
 import org.example.graph.algorithm.RouteAlgorithm;
-import org.example.graph.algorithm.exporter.GraphExporter;
 import org.example.graph.algorithm.impl.ant.exception.AntAlgorithmException;
 import org.example.graph.parser.GraphParser;
 import org.example.graph.parser.strategy.exception.GraphParserStrategyException;
@@ -20,14 +20,16 @@ import static org.example.graph.algorithm.impl.ant.Indicator.FAILURE;
 import static org.example.graph.algorithm.impl.ant.Indicator.RESULT;
 
 public class AntAlgorithm extends RouteAlgorithm {
-
+    private Vertex start;
+    private Vertex terminal;
+    private Statistics statistics;
+    private MutableValueGraph<Vertex, Edge> graph;
+    private final double p;
     private final int alfa;
     private final int beta;
     private final int lMin;
-    private final int numberOfAnts;
     private final int iterations;
-    private final double p;
-    private MutableValueGraph<Vertex, Edge> graph;
+    private final int numberOfAnts;
     public AntAlgorithm(
             int alfa,
             int beta,
@@ -48,15 +50,20 @@ public class AntAlgorithm extends RouteAlgorithm {
     @Override
     @SuppressWarnings("unchecked")
     public List<Vertex> buildRoute(Vertex start, Vertex terminal) throws AntAlgorithmException {
+        this.statistics = new Statistics();
+        this.start = Objects.requireNonNull(start);
+        this.terminal = Objects.requireNonNull(terminal);
+
         if (start.equals(terminal))
             return List.of(start);
 
         buildGraph();
-        checkPoints(start, terminal);
-        startToMove(start, terminal);
+        checkPoints();
+        startToMove();
 
-        Stack<Vertex> bestRoute = buildBestRoute(start, terminal);
+        Stack<Vertex> bestRoute = buildBestRoute();
         System.out.println("Length: " + Path.valueOf((Stack<Vertex>) bestRoute.clone(), graph).getLength());
+        System.out.println(statistics);
         return bestRoute;
     }
 
@@ -73,33 +80,32 @@ public class AntAlgorithm extends RouteAlgorithm {
         }
     }
 
-    private void checkPoints(Vertex s, Vertex e) throws AntAlgorithmException {
+    private void checkPoints() throws AntAlgorithmException {
         Set<Vertex> vertices = graph.nodes();
 
         String message = "Invalid %s point";
 
-        if (!vertices.contains(s))
+        if (!vertices.contains(start))
             throw new AntAlgorithmException(message.formatted("start"));
 
-        if (!vertices.contains(e))
+        if (!vertices.contains(terminal))
             throw new AntAlgorithmException(message.formatted("terminal"));
     }
 
-    private void startToMove(Vertex start, Vertex end) {
-        for (int i = 0; i < iterations; i++)
-            updateEdges(findPaths(start, end));
+    private void startToMove() {
+        for (int i = 0; i < iterations; i++) updateEdges(findPaths());
     }
 
-    private List<Path> findPaths(Vertex start, Vertex end) {
+    private List<Path> findPaths() {
         List<Path> paths = new LinkedList<>();
-        for (int j = 0; j < numberOfAnts; j++)
-            paths.add(findPath(start, end));
+        for (int i = 0; i < numberOfAnts; i++) paths.add(findPath());
+        statistics.addDistances(paths.stream().map(Path::getLength).toList());
         return paths;
     }
 
-    private Path findPath(Vertex start, Vertex end) {
+    private Path findPath() {
         Stack<Vertex> path = new Stack<>();
-        Indicator i = findPathRecursive(start, end, new HashSet<>(), path);
+        Indicator i = findPathRecursive(start, new HashSet<>(), path);
 
         if (i.equals(FAILURE))
             throw new IllegalStateException("Cannot find path");
@@ -107,7 +113,7 @@ public class AntAlgorithm extends RouteAlgorithm {
         return Path.valueOf(path, graph);
     }
 
-    private Indicator findPathRecursive(Vertex curr, Vertex terminal, HashSet<Vertex> visited, Stack<Vertex> path) {
+    private Indicator findPathRecursive(Vertex curr, HashSet<Vertex> visited, Stack<Vertex> path) {
         visited.add(curr);
         path.push(curr);
 
@@ -122,7 +128,7 @@ public class AntAlgorithm extends RouteAlgorithm {
         Map<Vertex, Double> transitionProbabilities
                 = getTransitionProbabilities(curr, adjacentVertices);
         while (transitionProbabilities.size() > 0) {
-            Indicator i = findPathRecursive(takeStep(transitionProbabilities), terminal, visited, path);
+            Indicator i = findPathRecursive(takeStep(transitionProbabilities), visited, path);
 
             if (i.equals(RESULT))
                 return i;
@@ -162,13 +168,17 @@ public class AntAlgorithm extends RouteAlgorithm {
     public double getSumOfWish(Vertex curr, Set<Vertex> adjacentVertices) {
         return adjacentVertices.stream()
                 .map(vertex -> getEdge(curr, vertex))
-                .mapToDouble(e -> e.calculateWish(alfa, beta))
+                .mapToDouble(e -> {
+                    double wish = e.calculateWish(alfa, beta);
+                    statistics.addWish(wish);
+                    return wish;
+                })
                 .sum();
     }
 
-    private Stack<Vertex> buildBestRoute(Vertex start, Vertex end) {
+    private Stack<Vertex> buildBestRoute() {
         Stack<Vertex> path = new Stack<>();
-        Indicator i = buildBestRouteRecursive(start, end, new HashSet<>(), path);
+        Indicator i = buildBestRouteRecursive(start, new HashSet<>(), path);
 
         if (i.equals(FAILURE))
             throw new IllegalStateException("Cannot find path");
@@ -176,7 +186,7 @@ public class AntAlgorithm extends RouteAlgorithm {
         return path;
     }
 
-    private Indicator buildBestRouteRecursive(Vertex curr, Vertex terminal, Set<Vertex> visited, Stack<Vertex> path) {
+    private Indicator buildBestRouteRecursive(Vertex curr, Set<Vertex> visited, Stack<Vertex> path) {
         visited.add(curr);
         path.push(curr);
 
@@ -191,7 +201,7 @@ public class AntAlgorithm extends RouteAlgorithm {
         PriorityQueue<Entry> pheromoneQueue = getPheromoneQueue(curr, adjacentVertices);
         while (!pheromoneQueue.isEmpty()) {
             Entry entry = pheromoneQueue.poll();
-            Indicator i = buildBestRouteRecursive(entry.getVertex(), terminal, visited, path);
+            Indicator i = buildBestRouteRecursive(entry.getVertex(), visited, path);
 
             if (i.equals(RESULT))
                 return i;
@@ -216,8 +226,11 @@ public class AntAlgorithm extends RouteAlgorithm {
         evaporatePheromone();
         for (Path path : paths) {
             double extraPheromone = path.getExtraPheromone(lMin);
-            for (EndpointPair<Vertex> edge : path.getEdges())
-                getEdge(edge.nodeV(), edge.nodeU()).addPheromone(extraPheromone);
+            statistics.addExtraPheromone(extraPheromone);
+            for (EndpointPair<Vertex> edge : path.getEdges()) {
+                Edge e = getEdge(edge.nodeV(), edge.nodeU());
+                e.addPheromone(extraPheromone);
+            }
         }
     }
 

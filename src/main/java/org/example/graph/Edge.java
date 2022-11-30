@@ -39,4 +39,14 @@ public class Edge {
     public void addPheromone(double extraPheromone) {
         this.pheromone += extraPheromone;
     }
+
+    @Override
+    public String toString() {
+        final StringBuffer sb = new StringBuffer("Edge{");
+        sb.append("pheromone=").append(pheromone);
+        sb.append(", distance=").append(distance);
+        sb.append(", proximity=").append(proximity);
+        sb.append('}');
+        return sb.toString();
+    }
 }

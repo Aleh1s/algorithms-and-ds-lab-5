@@ -40,7 +40,6 @@ public class Main {
                     RouteAlgorithm routeAlgorithm = factory.createRouteAlgorithm();
                     List<Vertex> path = routeAlgorithm.buildRoute(start, terminal);
                     System.out.println("Result route: " + path);
-
                     System.out.print("You want to export graph? [yes/no]: ");
                     String choice = new Scanner(System.in).nextLine();
                     if (choice.equalsIgnoreCase("yes")) {
@@ -54,15 +53,15 @@ public class Main {
                     }
                 } catch (InputMismatchException e) {
                     System.out.println("Invalid input");
-                } catch (RouteAlgorithmException e) {
+                } catch (RouteAlgorithmException
+                         | GraphExporterFactoryException e) {
                     System.out.println(e.getMessage());
                 }
                 System.out.print("You want to continue? [yes/no]: ");
                 action = new Scanner(System.in).nextLine();
             } while (action.equalsIgnoreCase("yes"));
         } catch (GraphParserStrategyFactoryException
-                 | RouteAlgorithmFactoryException
-                 | GraphExporterFactoryException e) {
+                 | RouteAlgorithmFactoryException e) {
             e.printStackTrace();
         }
     }
