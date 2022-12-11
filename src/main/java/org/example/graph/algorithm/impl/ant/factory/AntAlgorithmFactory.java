@@ -1,9 +1,6 @@
 package org.example.graph.algorithm.impl.ant.factory;
 
-import org.example.graph.Edge;
-import org.example.graph.Vertex;
 import org.example.graph.algorithm.RouteAlgorithm;
-import org.example.graph.algorithm.exporter.GraphExporter;
 import org.example.graph.algorithm.factory.RouteAlgorithmFactory;
 import org.example.graph.algorithm.impl.ant.AntAlgorithm;
 import org.example.graph.algorithm.impl.ant.exception.AntAlgorithmFactoryException;
@@ -37,8 +34,7 @@ public class AntAlgorithmFactory implements RouteAlgorithmFactory {
                     Integer.parseInt(props.getProperty(NUMBER_OF_ANTS)),
                     Integer.parseInt(props.getProperty(ITERATIONS)),
                     Double.parseDouble(props.getProperty(P)),
-                    graphParser
-            );
+                    graphParser);
         } catch (IOException e) {
             throw new AntAlgorithmFactoryException(e);
         }

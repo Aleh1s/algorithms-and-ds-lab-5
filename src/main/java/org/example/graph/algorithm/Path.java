@@ -5,6 +5,7 @@ import com.google.common.graph.MutableValueGraph;
 import org.example.graph.Edge;
 import org.example.graph.Vertex;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 
@@ -13,10 +14,12 @@ import static com.google.common.graph.EndpointPair.*;
 public class Path {
     private final MutableValueGraph<Vertex, Edge> graph;
     private final List<EndpointPair<Vertex>> edges;
+    private final Stack<Vertex> path;
     private int length;
 
-    private Path(MutableValueGraph<Vertex, Edge> graph) {
-        this.edges = new Stack<>();
+    private Path(MutableValueGraph<Vertex, Edge> graph, Stack<Vertex> path) {
+        this.path = path;
+        this.edges = new LinkedList<>();
         this.graph = graph;
     }
 
@@ -31,8 +34,9 @@ public class Path {
         return edges;
     }
 
+    @SuppressWarnings("unchecked")
     public static Path valueOf(Stack<Vertex> path, MutableValueGraph<Vertex, Edge> graph) {
-        Path p = new Path(graph);
+        Path p = new Path(graph, (Stack<Vertex>) path.clone());
 
         Vertex curr = path.pop(), next;
         while (!path.empty()) {
@@ -52,5 +56,7 @@ public class Path {
         return lMin / (double) length;
     }
 
-
+    public Stack<Vertex> getPath() {
+        return path;
+    }
 }

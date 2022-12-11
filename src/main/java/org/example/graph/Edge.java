@@ -40,6 +40,10 @@ public class Edge {
         this.pheromone += extraPheromone;
     }
 
+    public void setPheromone(double pheromone) {
+        this.pheromone = pheromone;
+    }
+
     @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer("Edge{");

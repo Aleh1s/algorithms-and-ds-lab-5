@@ -15,6 +15,9 @@ public class Statistics {
     public void addDistances(List<Integer> distances) {
         this.distances.addAll(distances);
     }
+    public void addDistance(Integer distance) {
+        this.distances.add(distance);
+    }
 
     public void addWish(double wish) {
         this.wishes.add(wish);
@@ -28,7 +31,7 @@ public class Statistics {
         return wishes.stream().mapToDouble(w -> w).average().orElse(0);
     }
 
-    private double getAverageDistance() {
+    public double getAverageDistance() {
         return distances.stream().mapToInt(d -> d).average().orElse(0);
     }
 

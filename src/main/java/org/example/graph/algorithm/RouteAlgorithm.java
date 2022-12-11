@@ -13,11 +13,9 @@ import static java.util.Objects.requireNonNull;
 
 public abstract class RouteAlgorithm {
     protected GraphParser graphParser;
-
     public RouteAlgorithm(GraphParser graphParser) {
         this.graphParser = requireNonNull(graphParser);
     }
-
     public abstract List<Vertex> buildRoute(Vertex start, Vertex terminal) throws RouteAlgorithmException;
     public abstract MutableValueGraph<Vertex, Edge> getGraph();
 }
